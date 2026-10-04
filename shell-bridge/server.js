@@ -17,7 +17,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const { WebSocketServer } = require('ws');
 
 const PORT = parseInt(process.env.SHELL_BRIDGE_PORT || '8766', 10);
@@ -39,6 +39,34 @@ const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ ok: true, conns: wss.clients.size }) + '\n');
+    return;
+  }
+  if (req.url === '/status') {
+    // Tailnet summary for the app's "In Review" count. codespace has
+    // passwordless sudo; tailscaled's socket is root-only.
+    execFile('sudo', ['-n', 'tailscale', 'status', '--json'], { timeout: 5000 }, (err, stdout) => {
+      if (err) {
+        res.writeHead(502, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'tailscale query failed' }) + '\n');
+        return;
+      }
+      try {
+        const st = JSON.parse(stdout);
+        const peers = Object.values(st.Peer || {});
+        const online = peers.filter((p) => p.Online).length;
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({
+          ok: true,
+          self: st.Self && st.Self.HostName,
+          peers: peers.length,
+          online,
+          offline: peers.length - online,
+        }) + '\n');
+      } catch {
+        res.writeHead(502, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'bad tailscale data' }) + '\n');
+      }
+    });
     return;
   }
   res.writeHead(404).end('shell-bridge: WebSocket endpoint\n');
