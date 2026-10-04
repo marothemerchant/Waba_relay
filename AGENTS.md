@@ -10,7 +10,7 @@ The repo is a near-empty shell: the `waba-relay` project (clean-room ClawTermina
 - Metro dev server: `/etc/init.d/metro-auto-link` (user `codespace`, boot-wired in `ssh-init.sh` after opencode-serve), advertises the tailnet IP via `REACT_NATIVE_PACKAGER_HOSTNAME=100.91.244.126`. Expo Go connects to `exp://100.91.244.126:8081` — manual URL entry required; LAN auto-discovery doesn't cross Tailscale.
 - EAS project `@marotheart/auto-link` (id `c58420cc-dc64-4638-80aa-8cef57c25835`). Publish: `cd auto-link && CI=1 npx --yes eas-cli@latest update --branch main --message "..." --platform all --non-interactive`. `runtimeVersion` in app.json is pinned to the literal `exposdk:57.0.0` for Expo Go compatibility — bump it when the SDK upgrades.
 - `npx expo install <pkg>` fails in this environment; use plain `npm install <pkg>` instead (worked for expo-updates).
-- EAS quirks seen here: `branch:create` may report "GraphQL request failed" after actually succeeding (verify with `branch:list` before retrying).
+- EAS quirks seen here: `branch:create` may report "GraphQL request failed" after actually succeeding (verify with `branch:list` before retrying). Publishing to a **branch is not enough** — Expo Go fetches by **channel**. `eas update:configure` died mid-setup once and left no channel, so no update ever reached the phone despite successful publishes. If the app "doesn't update", check `CI=1 npx eas-cli@latest channel:list` first; fix with `channel:create main --non-interactive` (auto-links to branch `main`). Update checks happen at app launch — fully quit Expo Go, don't just resume it.
 
 ## opencode-serve (Tailscode API)
 
