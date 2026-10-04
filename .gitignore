@@ -5,3 +5,4 @@ auto-link/
 shell-bridge/node_modules/
 shell-bridge/.token
 shell-bridge/bridge.log
+opencode-gateway/gateway.log
