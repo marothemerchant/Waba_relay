@@ -1,0 +1,17 @@
+{
+  "name": "shell-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Token-authenticated WebSocket -> bash bridge for the Auto-Link app's in-app terminal. Runs unprivileged as codespace; tailnet-reachable only.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "token": "cat .token 2>/dev/null || echo 'no token yet — start the server once'"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

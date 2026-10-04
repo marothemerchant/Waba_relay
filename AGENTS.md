@@ -12,6 +12,12 @@ The repo is a near-empty shell: the `waba-relay` project (clean-room ClawTermina
 - `npx expo install <pkg>` fails in this environment; use plain `npm install <pkg>` instead (worked for expo-updates).
 - EAS quirks seen here: `branch:create` may report "GraphQL request failed" after actually succeeding (verify with `branch:list` before retrying). Publishing to a **branch is not enough** — Expo Go fetches by **channel**. `eas update:configure` died mid-setup once and left no channel, so no update ever reached the phone despite successful publishes. If the app "doesn't update", check `CI=1 npx eas-cli@latest channel:list` first; fix with `channel:create main --non-interactive` (auto-links to branch `main`). Update checks happen at app launch — fully quit Expo Go, don't just resume it.
 
+## shell-bridge (Auto-Link in-app terminal)
+
+- `shell-bridge/` in this repo: a token-authed WebSocket→bash bridge (`ws` only, no PTY — line-oriented shell; TUIs won't work). Serves `ws://0.0.0.0:8766/?token=…`; token generated on first run in `shell-bridge/.token` (mode 600, gitignored) and mirrored into the app's default settings.
+- Managed by `/etc/init.d/shell-bridge` (user `codespace`, boot-wired after metro-auto-link). Health: `curl localhost:8766/health`. Log: `shell-bridge/bridge.log`.
+- Protocol: client sends `{"type":"input","data":"cmd\n"}`; server streams `{"type":"output","stream":"stdout|stderr","data":…}` and `{"type":"exit","code":…}`. One bash per connection, killed on disconnect. `bash -i` echoes prompt+command back — the app must not locally echo input.
+
 ## opencode-serve (Tailscode API)
 
 - `opencode serve` on `0.0.0.0:4096` for the Tailscode iOS app, installed by the guitaripod/Tailscode script (files: `~/.local/bin/opencode-serve-*`, `~/.config/opencode-serve.env` with the basic-auth password, marker-guarded — don't hand-edit those scripts; re-run the installer to change them). Its systemd `--user` units are inert here; the machine runs it via `/etc/init.d/opencode-serve` (user `codespace`, boot-wired in `ssh-init.sh` after waba-relay, logs `~/.local/state/opencode-serve/stdout.log`).

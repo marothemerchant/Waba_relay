@@ -1,2 +1,7 @@
 # The Expo app is its own project (and its own repo once you push one).
 auto-link/
+
+# shell-bridge runtime state
+shell-bridge/node_modules/
+shell-bridge/.token
+shell-bridge/bridge.log
