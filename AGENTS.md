@@ -1,20 +1,14 @@
 # AGENTS.md
 
-## Project
+## Repo state
 
-`waba-relay`: a clean-room, permissive WebSocket relay (Node 20+, single dep `ws`) compatible with the ClawTerminal iOS app's "Relay Server" (ws://:8765, token auth, `/token` endpoint, 6-char room broadcast). The real protocol is proprietary — `classify()` in `src/server.js` fuzzy-matches message types, and unknown frames are logged to `logs/relay.log`. When the app misbehaves, read that log first and extend the handlers; do not tighten the auth/message handling without evidence from the log.
+The repo is a near-empty shell: the `waba-relay` project (clean-room ClawTerminal-compatible relay) was deleted on 2026-10-04. Full implementation lives in git history (commit `03d28da` and earlier) — restore from there if asked; do not rebuild it from scratch. The `/etc/init.d/waba-relay` service and its `ssh-init.sh` boot hook were removed at the same time; port 8765 is closed.
 
-## Commands
+## opencode-serve (Tailscode API)
 
-- `npm start` — run foreground; `npm test` — 10-assertion smoke test (needs a running server); `npm run token` — print the auth token
-- `./install.sh` — install + restart via service + smoke test + print token/URLs
-- `sudo service waba-relay start|stop|restart|status` — production control (runs as `codespace`, pid file `/run/waba-relay.pid`)
-- State: token in `.relay-state/token` (gitignored, mode 600). Logs: `logs/relay.log`. Both survive restarts; neither survives a codespace rebuild (token regenerates on first boot — that's fine, just re-enter it in the app).
-
-## Gotchas
-
-- Never `pkill -f` with a pattern matching `server.js` from a shell whose own cmdline contains it — it SIGTERMs the invoking shell. Use `sudo service waba-relay stop` instead.
-- `/token` intentionally answers on localhost only; the WS endpoint is on `0.0.0.0:8765`. Reachability from the iPhone is via Tailscale (`tailscale0` is allowed by the HARDENING chain; eth0:8765 is dropped).
+- `opencode serve` on `0.0.0.0:4096` for the Tailscode iOS app, installed by the guitaripod/Tailscode script (files: `~/.local/bin/opencode-serve-*`, `~/.config/opencode-serve.env` with the basic-auth password, marker-guarded — don't hand-edit those scripts; re-run the installer to change them). Its systemd `--user` units are inert here; the machine runs it via `/etc/init.d/opencode-serve` (user `codespace`, boot-wired in `ssh-init.sh` after waba-relay, logs `~/.local/state/opencode-serve/stdout.log`).
+- Auth is HTTP basic, user `opencode`, password in the env file. Only `/api/*` enforces it — paths like `/config` or `/session` return the public SPA HTML shell (200) even without credentials; that's not an auth failure.
+- The 15-min model-catalog refresher (`opencode-catalog-refresh`) is intentionally not scheduled: it stands down on opencode v2 (installed: v2.0.22), and no cron/systemd exists here.
 
 ## Environment (this dev container)
 
